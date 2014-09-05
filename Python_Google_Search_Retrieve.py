@@ -4,7 +4,7 @@
  Module to get google search results by using Pattern module
  Author: Tan Kok Hua (Guohua tan)
  Email: spider123@gmail.com
- Revised date: Sept 3 2014
+ Revised date: Sept 05 2014
 
 ##############################################
 
@@ -14,19 +14,14 @@ Usage:
     Able to retrieve both link and brief descriptions.
 
     Retrieve the google results links from google search site using Pattern
+    Current version able to retrieve link results and brief desc based on (multiple) keywords inputted.
 
 Required Modules:
     pattern
 
-
 TODO:
-    ## get multiple search
-    ## link the search results
-
-    ## separate into two different class??
-
-    ## consolidation of single and multiple search
-
+    additional crawling of individual results
+    
 '''
 
 import re, os, sys, math
@@ -85,9 +80,13 @@ class gsearch_url_form_class(object):
         
         ## Results parameters
         ## self link and desc dict --> add in ranking??
-        self.result_links_list = []
-        self.result_desc_list = []
-        self.result_link_desc_pair_list = []# list of list
+        self.result_links_list_per_keyword = []
+        self.result_desc_list_per_keyword = []
+        self.result_link_desc_pair_list_per_keyword = []# list of list
+
+        ## Full store data segregate by keyword
+        self.all_gs_results = dict() #dict with keyword is the search items and the values is the link desc pair.
+    
 
     def reformat_search_for_spaces(self):
         """
@@ -231,11 +230,13 @@ class gsearch_url_form_class(object):
         """ Parse all the url in the url list
 
         """
-        self.clear_all_single_url_store_list()
-        for search_key_url in self.sp_search_url_list:
+        for key_phrase, search_key_url in zip(self.g_search_key_list, self.sp_search_url_list):
+            print 'Now seaching: ', key_phrase
+            self.clear_all_single_url_store_list()
             for indivdual_url in search_key_url:
                 self.target_url_str = indivdual_url
                 self.parse_google_results_per_url()
+            self.all_gs_results[key_phrase] = self.result_link_desc_pair_list_per_keyword
                 
 
     def clear_all_single_url_store_list(self):
@@ -243,62 +244,88 @@ class gsearch_url_form_class(object):
             Clear for every search keyword.
 
         """
-        self.result_links_list = []
-        self.result_desc_list = []
-        self.result_link_desc_pair_list = []
+        self.result_links_list_per_keyword = []
+        self.result_desc_list_per_keyword = []
+        self.result_link_desc_pair_list_per_keyword = []
         
      
     def parse_google_results_per_url(self):
         """ Method to google results of one search url.
             Have both the link and desc results.
-            
         """
         self.create_dom_object()
         if self.url_query_timeout: return
         
-        # process the link and temp desc together
+        ## process the link and temp desc together
         dom_object = self.tag_element_results(self.dom_object, 'h3[class="r"]')
         for n in dom_object:
+            ## Get the result link
             if re.search('q=(.*)&(amp;)?sa',n.content):
                 temp_link_data = re.search('q=(.*)&(amp;)?sa',n.content).group(1)
                 print temp_link_data
-                self.result_links_list.append(temp_link_data)
+                self.result_links_list_per_keyword.append(temp_link_data)
                 
             else:
-                continue # skip the description if cannot get the
+                ## skip the description if cannot get the link
+                continue
 
-            ## get the desc
+            ## get the desc that comes with the results
             temp_desc = n('a')[0].content
+            temp_desc = self.strip_html_tag_off_desc(temp_desc)
             print temp_desc
-            self.result_desc_list.append(temp_desc)
-            self.result_link_desc_pair_list.append([temp_link_data,temp_desc])
+            self.result_desc_list_per_keyword.append(temp_desc)
+            self.result_link_desc_pair_list_per_keyword.append([temp_link_data,temp_desc])
             print
-          
+
+        ## keep the results to the number of keywords specified
+        ## just restrict the result_link_desc_pair_list_per_keyword
+        self.result_link_desc_pair_list_per_keyword = self.result_link_desc_pair_list_per_keyword[:self.search_results_num]
+
+    def strip_html_tag_off_desc(self, desc_text):
+        """ Strip all html tag from the desc text.
+            Function refernce from: http://stackoverflow.com/questions/753052/strip-html-from-strings-in-python
+            Args:
+                desc_text (str): text that contains html tags.
+            Returns:
+                (str): text that strip off html tags
+        """
+        return re.sub('<[^<]+?>', '', desc_text)  
 
 if __name__ == '__main__':
 
-    '''
-        Running the google search
-
-    '''
-    # User options
-    NUM_SEARCH_RESULTS = 125    # number of search results returned
-    BYPASS_GOOGLE_SEARCH = 0    # if this is active, bypass searching
-    NUM_RESULTS_TO_PROCESS = 5 # specify the number of results url to crawl
-
-    print 'Start search'
+    """ Running the google search.
+    """
     
-    ## Parameters setting
-    search_words = ['tokyo go', 'jogging']
+    choice = 1
 
-    ## Google site link scrape
-    if not BYPASS_GOOGLE_SEARCH:
-        print 'Get the google search results links'
+    if choice ==1:
+        print 'Start search'
+
+        ## User options
+        NUM_SEARCH_RESULTS = 10                # number of search results returned 
+        search_words = ['tokyo go', 'jogging']  # set the keyword setting
+
+        ## Create the google search class
         hh = gsearch_url_form_class(search_words)
+
+        ## Set the results
         hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
-        hh.data_format_switch = 1
+
+        ## Generate the Url list based on the search item
         url_list =  hh.formed_search_url()
 
-    hh.parse_all_search_url()
+        ## Parse the google page based on the url
+        hh.parse_all_search_url()
 
+        print 'End Search'
+
+    if choice == 2:
+        for n in hh.all_gs_results.keys():
+            print "=="*18
+            print 'Results for key: ', n
+            print "=="*18
+            for weblink, desc in hh.all_gs_results[n]:
+                print weblink
+                print desc
+                print
 
