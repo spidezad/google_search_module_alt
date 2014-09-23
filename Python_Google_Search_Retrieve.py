@@ -21,7 +21,18 @@ Required Modules:
 
 TODO:
     additional crawling of individual results
+    converge all rank object together - mmenaing all one with one
+    convert to data frame ? remove duplicate
+    search by date, most recent.
+    need to crawl each line after this
+
+Learning:
+    google search with date sorting
+    http://lifehacker.com/384375/filter-google-results-by-date-with-a-url-trick
+    for date in descending
+    &tbs=qdr:d,sbd:1
     
+
 '''
 
 import re, os, sys, math
@@ -63,10 +74,12 @@ class gsearch_url_form_class(object):
 
         ## user defined parameters
         self.search_results_num = 100 #set to any variable
+        self.enable_date_descending = 0 # will append the date descending text url if enable
 
         ## url construct string text
         self.prefix_of_search_text = "https://www.google.com/search?q="
         self.postfix_of_search_text = '&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a&channel=fflb&num=100'# non changable text
+        self.date_descending_text = '&tbs=qdr:d,sbd:1'
 
         ## url construct parameters
         self.sp_search_url_list = [] # list of list of url, consolidation of all the keywords.
@@ -86,6 +99,15 @@ class gsearch_url_form_class(object):
 
         ## Full store data segregate by keyword
         self.all_gs_results = dict() #dict with keyword is the search items and the values is the link desc pair.
+
+        ## results_converging
+        ## Use when all the keywords represent the same search criteria being look at
+        ## will cross match all the rank together (consider weightage??)
+        ## converge to single list and remove duplicates.
+        self.enable_results_converging = 1
+        self.merged_result_links_desc_list = []
+        self.merged_result_links_list = []
+        self.merged_result_desc_list = []
     
 
     def reformat_search_for_spaces(self):
@@ -108,6 +130,14 @@ class gsearch_url_form_class(object):
         """
         assert num_search > 0
         self.search_results_num = num_search
+
+    def enable_sort_date_descending(self, input =1):
+        """ Enable the sort_date_descending. Default is input =1.
+            Kwargs:
+                input = 1
+
+        """
+        self.enable_date_descending = input
 
     def calculate_num_page_to_scan(self):
         """Calculate the num of page to scan, assume 100 results per page.
@@ -170,6 +200,8 @@ class gsearch_url_form_class(object):
             self.output_url_str = self.prefix_of_search_text + self.g_search_key + \
                                   self.postfix_of_search_text +\
                                   self.formed_page_num(n)
+            if self.enable_date_descending:
+                self.output_url_str = self.output_url_str + self.date_descending_text
             sp_search_url_list_per_keyword.append(self.output_url_str)
         
         return  sp_search_url_list_per_keyword
@@ -289,34 +321,49 @@ class gsearch_url_form_class(object):
             Returns:
                 (str): text that strip off html tags
         """
-        return re.sub('<[^<]+?>', '', desc_text)  
+        return re.sub('<[^<]+?>', '', desc_text)
+
+    def consolidated_results(self):
+        """ Consolidated all results to one single results based on rank it which it appear on google search.
+            Only take effect if self.enable_results_converging =1.
+
+        """
+        if not self.enable_results_converging: return
+        
+        for rank_result in zip(*[self.all_gs_results[n] for n in self.all_gs_results.keys()]):
+            self.merged_result_links_desc_list = self.merged_result_links_desc_list + list(rank_result)
+                
+        self.merged_result_links_list = [n[0] for n in self.merged_result_links_desc_list]
+        self.merged_result_desc_list = [n[1] for n in self.merged_result_links_desc_list]
+            
 
 if __name__ == '__main__':
 
     """ Running the google search.
     """
     
-    choice = 1
+    choice = 3
 
     if choice ==1:
         print 'Start search'
 
         ## User options
-        NUM_SEARCH_RESULTS = 10                # number of search results returned 
-        search_words = ['tokyo go', 'jogging']  # set the keyword setting
-
+        NUM_SEARCH_RESULTS = 5                # number of search results returned 
+        search_words = ['Sheng Siong buy' , 'Sheng Siong sell', 'Sheng Siong sentiment', 'Sheng Siong stocks review', 'Sheng siong stock market']  # set the keyword setting
         ## Create the google search class
         hh = gsearch_url_form_class(search_words)
 
         ## Set the results
         hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
+        #hh.enable_sort_date_descending()# enable sorting of date by descending.
 
         ## Generate the Url list based on the search item
         url_list =  hh.formed_search_url()
 
         ## Parse the google page based on the url
         hh.parse_all_search_url()
-
+        hh.consolidated_results()
+        
         print 'End Search'
 
     if choice == 2:
@@ -328,4 +375,10 @@ if __name__ == '__main__':
                 print weblink
                 print desc
                 print
-
+                
+    if choice ==3:
+        for n in hh.merged_result_links_desc_list:
+            print 'link: ', n[0]
+            print 'Description: '
+            print n[1]
+            print '****'
