@@ -19,20 +19,22 @@ Usage:
 Required Modules:
     pattern
 
+Updates:
+    Sep 2014: Include the sort by date function. Converging google results.
+
 TODO:
     additional crawling of individual results
     converge all rank object together - mmenaing all one with one
     convert to data frame ? remove duplicate
-    search by date, most recent.
-    need to crawl each line after this
+    Need to remove those that are not relevant.... see desc can tell??
+    May need to include more results so that it canb e filterd.
+    Add the filter here??
 
 Learning:
     google search with date sorting
     http://lifehacker.com/384375/filter-google-results-by-date-with-a-url-trick
     for date in descending
     &tbs=qdr:d,sbd:1
-    
-
 '''
 
 import re, os, sys, math
@@ -45,8 +47,8 @@ class gsearch_url_form_class(object):
     '''
     def __init__(self, google_search_keyword = '' ):
         '''
-            Take in the search key word and transform it to the google search url
-            str/list google_search_keyword --> None
+            Take in the search key word and transform it to the google search url.
+
             Able to take in a list or str,
                 if str will set to self.g_search_key
                 else set to self.g_search_key_list
@@ -56,6 +58,10 @@ class gsearch_url_form_class(object):
             #aq -?
             #num -1,10,100 results displayed per page, default use 100 per page in this case.
             #client -- temp maintain to be firefox
+
+            Args:
+                google_search_keyword (str/list): input keywords for search.
+                                                  Can be single str of keywords or list of keywords.
 
             TODO:
             #with different agent --randomize this
@@ -348,14 +354,20 @@ if __name__ == '__main__':
         print 'Start search'
 
         ## User options
-        NUM_SEARCH_RESULTS = 5                # number of search results returned 
-        search_words = ['Sheng Siong buy' , 'Sheng Siong sell', 'Sheng Siong sentiment', 'Sheng Siong stocks review', 'Sheng siong stock market']  # set the keyword setting
+        NUM_SEARCH_RESULTS = 5                # number of search results returned
+
+        ## Combined results search 
+        stock_name = 'Sheng Siong'
+        append_search_part = ['stock buy' , 'stock sell', 'stock sentiment', 'stocks review', 'stock market'] 
+        search_words = map((lambda x: stock_name + ' ' + x), append_search_part)
+        #search_words = ['Sheng Siong buy']
+
         ## Create the google search class
         hh = gsearch_url_form_class(search_words)
 
         ## Set the results
         hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
-        #hh.enable_sort_date_descending()# enable sorting of date by descending.
+        #hh.enable_sort_date_descending()# enable sorting of date by descending. --> not enabled
 
         ## Generate the Url list based on the search item
         url_list =  hh.formed_search_url()

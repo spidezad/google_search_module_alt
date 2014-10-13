@@ -11,13 +11,17 @@
                      still will maintain the user specified count.
 
     TODO:
-        change the join character to allow flexiblilityh
+        change the join character to allow flexiblility
+        pattern matching and comparison--> tokenize and match?? --> something like concordance
+        tokenize might not be a good way to convert to list... the puntunication is being split from tex
+        modified some of the text that have special character to make it new line character -->this will eliminate non- sentences
+        make the sub text after the filter
     
 """
 import sys, os, time
 from pattern.en import parse, Sentence, parsetree, tokenize, singularize
 from pattern.vector import count, words, PORTER, LEMMA, Document
-from pattern.web import URL, plaintext
+from pattern.web import URL, plaintext, HTTP404NotFound
 from pattern.search import taxonomy, search , WordNetClassifier
 
 
@@ -28,7 +32,11 @@ def get_plain_text_fr_website(web_address):
         Returns:
             (str): plain text in str.
     """
-    s = URL(web_address).download()
+    try:
+        s = URL(web_address).download()
+    except HTTP404NotFound:
+        print 'website not found: ', web_address
+        s = ''
     ## s is html format.
     return convert_html_to_plaintext(s)
 
@@ -43,17 +51,47 @@ def convert_html_to_plaintext(html):
     """
     return plaintext(html)
 
-def retain_text_with_min_sentences_len(raw_text,len_limit =6 ):
+def retain_text_with_min_sentences_len(raw_text, len_limit =6, join_char = '' ):
     """ Return paragraph with sentences having certain number of length limit.
         Args:
             raw_text (str): text input in paragraphs.
             len_limit (int): min word limit.
+        Kwargs:
+            join_char (str): char that join the individual sentences.
         Returns:
             (str): modified text with min words in sentence
     """
     sentence_list  = get_sentences_with_min_words(split_text_to_list_of_sentences(raw_text), len_limit)
-    return ''.join(sentence_list)
+    return join_char.join(sentence_list)
 
+def return_subset_of_text(raw_text, start_index, end_index, join_char = '' ):
+    """ Return the subset of a raw text. Use the start and end index to govern the part of phrase to keep.
+        The join part is done by a newline \n
+        Args:
+            raw_text (str): text input in paragraphs.
+            start_index (int): min index is 0. Start count of sentence.
+            end_index (int): end part of sentence.
+        Kwargs:
+            join_char (str): char that join the individual sentences.
+        Returns:
+            (str): modified sub part of text.
+    """
+    assert start_index >= 0
+    return join_char.join(split_text_to_list_of_sentences(raw_text)[start_index:end_index])
+
+def replace_special_char_as_newline(raw_text, target_char = '*!|'):
+    """ Replace those special characters such as *, !, | as new line
+        so that the sentences between them can be treated as new sentence
+        Kwargs:
+            raw_text (str): raw text
+            target_char (char): target chars to replace
+        Returns:
+            (str): raw text with target char replaced.
+    """
+    for n in target_char:
+        raw_text = raw_text.replace(n,'\n')
+    return raw_text
+    
 def split_text_to_list_of_sentences(raw_text):
     """ Split the raw text into list of sentences.
         Args:
@@ -229,19 +267,24 @@ if __name__ == '__main__':
     webtext = get_plain_text_fr_website(web_address)
 
     ## modified plain text so that it can remove those very short sentences (such as side bar menu).
-    modifed_text = retain_text_with_min_sentences_len(webtext)
+    webtext = replace_special_char_as_newline(webtext)
+    modified_text = retain_text_with_min_sentences_len(webtext,10, join_char = '\n')
+    modified_text = return_subset_of_text(modified_text, 0,5)
+    print modified_text
 
+    sys.exit()
+     
     ## Begin summarizing the important pt of the website.
     ## first step to get the top freq words, here stated 10.
     ## Exclude len will remove any length less than specified, here stated 2.
-    list_of_top_freq_words = get_top_freq_words_in_text(modifed_text, 4, lambda w: w.lstrip("'").isalpha(),exclude_len = 2)
+    list_of_top_freq_words = get_top_freq_words_in_text(modified_text, 4, lambda w: w.lstrip("'").isalpha(),exclude_len = 2)
     print list_of_top_freq_words
     ## >> ['turbine', 'fluid', 'impulse', 'rotor']
 
     ## Parse the whole document for analyzing
     ## The pattern.en parser groups words that belong together into chunks.
     ##For example, the black cat is one chunk, tagged NP (i.e., a noun phrase)
-    t = parsetree(modifed_text, lemmata=True)
+    t = parsetree(modified_text, lemmata=True)
 
     ## get target search phrases based on the top freq words.
     results_dict = get_phrases_fr_list_of_keywords(t, list_of_top_freq_words, phrases_num_limit =5)

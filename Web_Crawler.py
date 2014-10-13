@@ -2,16 +2,23 @@
     Use for retrieving the information from list of url pass.
     Crawling only one level.
     Make use of pattern modules.
-    Limit the number of paragraph
+    Limit the number of paragraph or sentences
 
     Requires:
         Pandas
         Patten
         Pattern_parsing module
 
+    Temporary output to the text file as capture by the gui
+    The output not parse as what we wanted..
+    Locate places that have the keyword and take in the first few and last few sentencse.
+    Need to remove unencodeable character
+    tokenize specified the character
+    at least make sure the key word is present --> reject if keyword in stock does not appeary
 
-
-
+ Learnings:
+     taking care of unencodeable characters
+     http://stackoverflow.com/questions/5236437/python-unicodeencodeerror-how-can-i-simply-remove-troubling-unicode-characters
 
 """
 
@@ -62,8 +69,10 @@ class WebCrawler(object):
         
         """
         webtext = Pattern_Parsing.get_plain_text_fr_website(target_url)
-        modified_text = Pattern_Parsing.retain_text_with_min_sentences_len(webtext, len_limit =6)
-        print modified_text
+        webtext = Pattern_Parsing.replace_special_char_as_newline(webtext)
+        modified_text = Pattern_Parsing.retain_text_with_min_sentences_len(webtext,10, join_char = '\n')
+        #modified_text = Pattern_Parsing.return_subset_of_text(modified_text, 0,5)
+        #print modified_text
         self.parse_results_list.append(modified_text)
 
 
@@ -74,7 +83,7 @@ if __name__ == '__main__':
     """ Running the crawler
     """
     
-    choice = 1
+    choice = 4
 
     if choice ==1:
         print "start processing"
@@ -89,11 +98,29 @@ if __name__ == '__main__':
         ww = WebCrawler(list_of_urls)
         ww.parse_all_urls()
             
+    if choice == 2:
+        RESULT_FILE = r'c:\data\results_file.txt'
+        ## Dump results to text file
+        with open(RESULT_FILE,'w') as f:
+            for url, desc in zip(ww.list_of_urls, ww.parse_results_list):
+                f.write('\n')
+                f.write('#'*20)
+                f.write('\n')
+                f.write(url + '\n')
+                f.write('\n')
+                f.write(desc.encode(errors = 'ignore') + '\n' + '#'*18 + '\n')
 
-
-
-
-
-
+    if choice == 4:
+        from pattern.web import Twitter
+        import time
+         
+        t = Twitter()
+        i = None
+        for j in range(1):
+            for tweet in t.search('Sheng Siong Shares', start =1, count=100):#, start=i, 
+                print tweet.text
+                print
+##                print tweet.id
+##                i = int(tweet.id) -10
 
 
