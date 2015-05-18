@@ -20,6 +20,9 @@
      taking care of unencodeable characters
      http://stackoverflow.com/questions/5236437/python-unicodeencodeerror-how-can-i-simply-remove-troubling-unicode-characters
 
+ Updates:
+     Feb 20 2015: Add in exception handling if website have problem parsing
+
 """
 
 import re, os, sys, math
@@ -56,7 +59,10 @@ class WebCrawler(object):
         """
         for website in self.list_of_urls:
             print 'Now processing: ', website
-            self.parse_full_page(website)
+            try:
+                self.parse_full_page(website)
+            except:
+                print 'problem parsing following url: ', website
             print
 
     def parse_full_page(self, target_url):

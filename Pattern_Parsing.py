@@ -21,7 +21,7 @@
 import sys, os, time
 from pattern.en import parse, Sentence, parsetree, tokenize, singularize
 from pattern.vector import count, words, PORTER, LEMMA, Document
-from pattern.web import URL, plaintext, HTTP404NotFound
+from pattern.web import URL, plaintext, HTTP404NotFound, HTTP400BadRequest
 from pattern.search import taxonomy, search , WordNetClassifier
 
 
@@ -34,7 +34,7 @@ def get_plain_text_fr_website(web_address):
     """
     try:
         s = URL(web_address).download()
-    except HTTP404NotFound:
+    except (HTTP404NotFound, HTTP400BadRequest):
         print 'website not found: ', web_address
         s = ''
     ## s is html format.

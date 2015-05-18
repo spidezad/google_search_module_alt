@@ -20,7 +20,9 @@ Required Modules:
     pattern
 
 Updates:
-    Sep 2014: Include the sort by date function. Converging google results.
+    Nov 21 2014: Add option of printing.
+                 Add in encoding to unicode.
+    Sep 2014   : Include the sort by date function. Converging google results.
 
 TODO:
     additional crawling of individual results
@@ -29,12 +31,18 @@ TODO:
     Need to remove those that are not relevant.... see desc can tell??
     May need to include more results so that it canb e filterd.
     Add the filter here??
+    Add list of client for handling large requests
+    seaching for news
 
 Learning:
     google search with date sorting
     http://lifehacker.com/384375/filter-google-results-by-date-with-a-url-trick
     for date in descending
     &tbs=qdr:d,sbd:1
+
+    For more reference on google search
+    http://incolumitas.com/2013/01/06/googlesearch-a-rapid-python-class-to-get-search-results/
+
 '''
 
 import re, os, sys, math
@@ -114,8 +122,10 @@ class gsearch_url_form_class(object):
         self.merged_result_links_desc_list = []
         self.merged_result_links_list = []
         self.merged_result_desc_list = []
-    
 
+        ## Print
+        self.print_parse_results = 1 # if 1, print the results of the google search.
+    
     def reformat_search_for_spaces(self):
         """
             Method call immediately at the initialization stages
@@ -297,23 +307,26 @@ class gsearch_url_form_class(object):
         ## process the link and temp desc together
         dom_object = self.tag_element_results(self.dom_object, 'h3[class="r"]')
         for n in dom_object:
-            ## Get the result link
-            if re.search('q=(.*)&(amp;)?sa',n.content):
-                temp_link_data = re.search('q=(.*)&(amp;)?sa',n.content).group(1)
-                print temp_link_data
-                self.result_links_list_per_keyword.append(temp_link_data)
-                
-            else:
-                ## skip the description if cannot get the link
-                continue
+            try:
+                ## Get the result link
+                if re.search('q=(.*)&(amp;)?sa',n.content):
+                    temp_link_data = re.search('q=(.*)&(amp;)?sa',n.content).group(1)
+                    if self.print_parse_results: print temp_link_data
+                    self.result_links_list_per_keyword.append(temp_link_data)
+                    
+                else:
+                    ## skip the description if cannot get the link
+                    continue
 
-            ## get the desc that comes with the results
-            temp_desc = n('a')[0].content
-            temp_desc = self.strip_html_tag_off_desc(temp_desc)
-            print temp_desc
-            self.result_desc_list_per_keyword.append(temp_desc)
-            self.result_link_desc_pair_list_per_keyword.append([temp_link_data,temp_desc])
-            print
+                ## get the desc that comes with the results
+                temp_desc = n('a')[0].content
+                temp_desc = self.strip_html_tag_off_desc(temp_desc)
+                if self.print_parse_results: print temp_desc
+                self.result_desc_list_per_keyword.append(temp_desc)
+                self.result_link_desc_pair_list_per_keyword.append([temp_link_data,temp_desc])
+                if self.print_parse_results: print
+            except:
+                continue
 
         ## keep the results to the number of keywords specified
         ## just restrict the result_link_desc_pair_list_per_keyword
@@ -340,7 +353,7 @@ class gsearch_url_form_class(object):
             self.merged_result_links_desc_list = self.merged_result_links_desc_list + list(rank_result)
                 
         self.merged_result_links_list = [n[0] for n in self.merged_result_links_desc_list]
-        self.merged_result_desc_list = [n[1] for n in self.merged_result_links_desc_list]
+        self.merged_result_desc_list = [n[1].encode(errors = 'ignore') for n in self.merged_result_links_desc_list]
             
 
 if __name__ == '__main__':
@@ -348,22 +361,25 @@ if __name__ == '__main__':
     """ Running the google search.
     """
     
-    choice = 3
+    choice = 1
 
     if choice ==1:
         print 'Start search'
 
         ## User options
-        NUM_SEARCH_RESULTS = 5                # number of search results returned
+        NUM_SEARCH_RESULTS = 50                # number of search results returned
 
         ## Combined results search 
         stock_name = 'Sheng Siong'
         append_search_part = ['stock buy' , 'stock sell', 'stock sentiment', 'stocks review', 'stock market'] 
         search_words = map((lambda x: stock_name + ' ' + x), append_search_part)
-        #search_words = ['Sheng Siong buy']
+
+        search_words = ['stocks metrics for short term long term', 'what to look out for stock short term', 'importance of debt in stock']
 
         ## Create the google search class
         hh = gsearch_url_form_class(search_words)
+        hh.print_parse_results = 0
+        hh.enable_results_converging =0
 
         ## Set the results
         hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
