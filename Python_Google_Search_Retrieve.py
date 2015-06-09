@@ -20,6 +20,8 @@ Required Modules:
     pattern
 
 Updates:
+
+    Jun 09 2015: Resolve results with and without data converging    
     Nov 21 2014: Add option of printing.
                  Add in encoding to unicode.
     Sep 2014   : Include the sort by date function. Converging google results.
@@ -43,9 +45,13 @@ Learning:
     For more reference on google search
     http://incolumitas.com/2013/01/06/googlesearch-a-rapid-python-class-to-get-search-results/
 
+    Joining list of list
+    http://stackoverflow.com/questions/716477/join-list-of-lists-in-python
+
+
 '''
 
-import re, os, sys, math
+import re, os, sys, math, itertools
 from pattern.web import URL, DOM, plaintext, extension
 
 
@@ -346,11 +352,23 @@ class gsearch_url_form_class(object):
         """ Consolidated all results to one single results based on rank it which it appear on google search.
             Only take effect if self.enable_results_converging =1.
 
+            For example, will merge all the rank 1 together follow by 2 etc
+
+            make sure all the len are same
+
+            To do, if not converging, will combine sequently
+
         """
-        if not self.enable_results_converging: return
-        
-        for rank_result in zip(*[self.all_gs_results[n] for n in self.all_gs_results.keys()]):
-            self.merged_result_links_desc_list = self.merged_result_links_desc_list + list(rank_result)
+        self.merged_result_links_desc_list = []
+
+
+        if not self.enable_results_converging: 
+            for rank_result in itertools.chain([self.all_gs_results[n] for n in self.all_gs_results.keys()]):
+                self.merged_result_links_desc_list = self.merged_result_links_desc_list + list(rank_result)
+
+        else:
+            for rank_result in zip(*[self.all_gs_results[n] for n in self.all_gs_results.keys()]):
+                self.merged_result_links_desc_list = self.merged_result_links_desc_list + list(rank_result)
                 
         self.merged_result_links_list = [n[0] for n in self.merged_result_links_desc_list]
         self.merged_result_desc_list = [n[1].encode(errors = 'ignore') for n in self.merged_result_links_desc_list]
@@ -361,7 +379,7 @@ if __name__ == '__main__':
     """ Running the google search.
     """
     
-    choice = 1
+    choice = 3
 
     if choice ==1:
         print 'Start search'
@@ -375,11 +393,13 @@ if __name__ == '__main__':
         search_words = map((lambda x: stock_name + ' ' + x), append_search_part)
 
         search_words = ['stocks metrics for short term long term', 'what to look out for stock short term', 'importance of debt in stock']
+    
+        search_words = ['see cat', 'see dog']
 
         ## Create the google search class
         hh = gsearch_url_form_class(search_words)
         hh.print_parse_results = 0
-        hh.enable_results_converging =0
+        hh.enable_results_converging =1
 
         ## Set the results
         hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
@@ -395,6 +415,12 @@ if __name__ == '__main__':
         print 'End Search'
 
     if choice == 2:
+        """
+            If consolidated results is false, will store the results in terms of each search keys within the\
+            self.all_gs_results.
+            Each of the results will store the weblink and the brief desc following it
+
+        """
         for n in hh.all_gs_results.keys():
             print "=="*18
             print 'Results for key: ', n
@@ -410,3 +436,8 @@ if __name__ == '__main__':
             print 'Description: '
             print n[1]
             print '****'
+
+    if choice ==4:
+        """"""
+        
+

@@ -4,6 +4,7 @@
     Description: Parsing of text using python pattern module. Supplement to python pattern google search.
 
     Updates:
+        May 27 2015: amend to retain_text_with_min_sentences_len. Set the sentences limit.
         Sep 22 2014: Implement in python pattern google search
         Aug 02 2014: Add in singular function: convert all keyword to singular.
                      Change rm_duplicate_keywords function so that it can be ordered.
@@ -51,17 +52,25 @@ def convert_html_to_plaintext(html):
     """
     return plaintext(html)
 
-def retain_text_with_min_sentences_len(raw_text, len_limit =6, join_char = '' ):
+def retain_text_with_min_sentences_len(raw_text, len_limit =6, join_char = '', limit_num_of_sentences = 0 ):
     """ Return paragraph with sentences having certain number of length limit.
         Args:
             raw_text (str): text input in paragraphs.
             len_limit (int): min word limit.
         Kwargs:
             join_char (str): char that join the individual sentences.
+            limit_num_of_sentences (int): 0 -- all sentences. else set limit num of sentences
         Returns:
             (str): modified text with min words in sentence
     """
     sentence_list  = get_sentences_with_min_words(split_text_to_list_of_sentences(raw_text), len_limit)
+##    print 'in parsing now'
+##    print len(sentence_list)
+##    print limit_num_of_sentences
+##    print len(sentence_list[:limit_num_of_sentences])
+    if limit_num_of_sentences:
+        return join_char.join(sentence_list[:limit_num_of_sentences])
+    
     return join_char.join(sentence_list)
 
 def return_subset_of_text(raw_text, start_index, end_index, join_char = '' ):

@@ -15,8 +15,16 @@
         http://stackoverflow.com/questions/15703590/combining-two-lists-to-string
     
     To do:
-        will include file for searching
+        will include file for searching --> to be same as image search
         enable differrn kind of search.
+        use the differnt symbol to separate the search-->use ability from the multiple sbr soring.
+        Too much text, limit the text qty to 500?? --> *
+        Make sure there is no overlapping of search --> there is (Bug) how to split the search to make sure no overlaop
+
+    Bugs:
+        it seems that the website and content may not be accurate.
+        may not be able to turn off the consolidated_results
+        or something happen during merging.....
     
 
 """
@@ -37,7 +45,7 @@ if __name__ == '__main__':
     print 'Start search'
 
     ## User options
-    NUM_SEARCH_RESULTS = 200                # number of search results returned
+    NUM_SEARCH_RESULTS = 40                # number of search results returned
 
 
     if choice == 3:
@@ -63,11 +71,13 @@ if __name__ == '__main__':
 
     if choice == 2:
         ## for other search
-        search_words = ['best jewellery shop buy necklace singapore', 'popular brands for jewellery', 'top brand for jewellery forum']
+        search_words = ['best time of year to go Hokkaido', 'short trip hong kong']
+        #search_words = ['']
 
 
     ## Create the google search class
     hh = gsearch_url_form_class(search_words)
+    hh.enable_results_converging =0
 
     ## Set the results
     hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
@@ -84,6 +94,7 @@ if __name__ == '__main__':
     print 'Start crawling individual results'
     
     ww = WebCrawler(hh.merged_result_links_list)
+    ww.set_limit_on_output_sentences(10)
     ww.parse_all_urls()
 
     RESULT_FILE = r'c:\data\results_file.txt'
