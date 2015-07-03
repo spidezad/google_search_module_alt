@@ -1,30 +1,28 @@
 """
 
     Consolidated Module that take in series of search keys and crawl the results of each website.
-    Cannot sniff much in terms of stocks....
-    Also the the data seems fragmented --> need to settle on the \n portion.
-    Can count number of times noun being mentioned
 
-    Review the steps as below
-    Matrix joining which combined the main and sub topic.
-    Get the google results page --> link and desc
-    For each individual page --> scrape the webpage (link with pattern) so retrieve text that only meet certain lenght
+
 
     Learning:
         joining two lists
         http://stackoverflow.com/questions/15703590/combining-two-lists-to-string
-    
+
+    Updates:
+        Jun 09 2015: Add in get_searchlist_fr_file function
+
     To do:
-        will include file for searching --> to be same as image search
         enable differrn kind of search.
         use the differnt symbol to separate the search-->use ability from the multiple sbr soring.
-        Too much text, limit the text qty to 500?? --> *
         Make sure there is no overlapping of search --> there is (Bug) how to split the search to make sure no overlaop
+        Enable date search as well.
+        Also the the data seems fragmented --> need to settle on the \n portion.
+        Secondary search reinforce on the correct search
 
     Bugs:
         it seems that the website and content may not be accurate.
         may not be able to turn off the consolidated_results
-        or something happen during merging.....
+        or something happen during merging..... (to monitor)
     
 
 """
@@ -33,6 +31,29 @@
 import os, sys
 from Python_Google_Search_Retrieve import gsearch_url_form_class
 from Web_Crawler import WebCrawler
+
+
+def get_searchlist_fr_file(filename):
+    """Get search list from filename. Ability to add in a lot of phrases.
+        Will replace the self.g_search_key_list.
+        Will ignore those that are commented, i.e, marked with '#'
+        Args:
+            filename (str): full file path
+    """
+    with open(filename,'r') as f:
+        g_search_key_list = f.readlines()
+
+    return [n for n in g_search_key_list if not n.startswith('#')]
+
+def execute_google_search(search_phrases, num_search_results, sentence_limit):
+    """
+        Perform google searches.
+        Args:
+            search_phrases (list/str): search phrases in list or single str
+            num_search_results  (int):
+            sentence_limit (int): 
+    """
+    
 
     
 if __name__ == '__main__':
@@ -45,8 +66,9 @@ if __name__ == '__main__':
     print 'Start search'
 
     ## User options
-    NUM_SEARCH_RESULTS = 40                # number of search results returned
-
+    NUM_SEARCH_RESULTS = 20                # number of search results returned
+    SENTENCE_LIMIT = 30
+    searchlist_fpath = r'C:\data\temp\gimage_pic\wordsearch_list.txt'
 
     if choice == 3:
         """ For matrix search crossing.
@@ -71,9 +93,10 @@ if __name__ == '__main__':
 
     if choice == 2:
         ## for other search
-        search_words = ['best time of year to go Hokkaido', 'short trip hong kong']
-        #search_words = ['']
+        search_words = get_searchlist_fr_file(searchlist_fpath)
+        
 
+    ## change to a funciton
 
     ## Create the google search class
     hh = gsearch_url_form_class(search_words)
@@ -94,7 +117,7 @@ if __name__ == '__main__':
     print 'Start crawling individual results'
     
     ww = WebCrawler(hh.merged_result_links_list)
-    ww.set_limit_on_output_sentences(10)
+    ww.set_limit_on_output_sentences(SENTENCE_LIMIT)
     ww.parse_all_urls()
 
     RESULT_FILE = r'c:\data\results_file.txt'

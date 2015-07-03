@@ -35,6 +35,9 @@ TODO:
     Add the filter here??
     Add list of client for handling large requests
     seaching for news
+    
+
+    special characters handling --> & is %26
 
 Learning:
     google search with date sorting
@@ -47,6 +50,9 @@ Learning:
 
     Joining list of list
     http://stackoverflow.com/questions/716477/join-list-of-lists-in-python
+
+    similar function code
+    http://incolumitas.com/2013/01/06/googlesearch-a-rapid-python-class-to-get-search-results/
 
 
 '''
@@ -379,7 +385,7 @@ if __name__ == '__main__':
     """ Running the google search.
     """
     
-    choice = 3
+    choice = 1
 
     if choice ==1:
         print 'Start search'

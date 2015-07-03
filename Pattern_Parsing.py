@@ -17,14 +17,26 @@
         tokenize might not be a good way to convert to list... the puntunication is being split from tex
         modified some of the text that have special character to make it new line character -->this will eliminate non- sentences
         make the sub text after the filter
+
+        problem with converting to plain text. --> may need alternative solution to convert to plaintext.
+        still have problem with encoding... to bypass encoding.
+
+    Learning:
+        decoding problem:
+        http://stackoverflow.com/questions/2006115/python-encoding-issue
+        strip all those that can be strip??? --> change all to comments so can be strip???
+
+        pp = re.sub('<','<!--', dd)
+        pp1 = re.sub('>','-->', pp)
+        strip_comments(pp1)
     
+
 """
 import sys, os, time
 from pattern.en import parse, Sentence, parsetree, tokenize, singularize
 from pattern.vector import count, words, PORTER, LEMMA, Document
 from pattern.web import URL, plaintext, HTTP404NotFound, HTTP400BadRequest
 from pattern.search import taxonomy, search , WordNetClassifier
-
 
 def get_plain_text_fr_website(web_address):
     """ Scrape plain text from a web site.
@@ -50,7 +62,12 @@ def convert_html_to_plaintext(html):
 
         TODO: include more parameters.
     """
-    return plaintext(html)
+    try:
+        return plaintext(html)
+    except:
+        print 'problem converting to plain text'
+        return ''
+
 
 def retain_text_with_min_sentences_len(raw_text, len_limit =6, join_char = '', limit_num_of_sentences = 0 ):
     """ Return paragraph with sentences having certain number of length limit.

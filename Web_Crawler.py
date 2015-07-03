@@ -21,12 +21,19 @@
      http://stackoverflow.com/questions/5236437/python-unicodeencodeerror-how-can-i-simply-remove-troubling-unicode-characters
 
  Updates:
-     Jun 09 2015: Add in function set_limit_on_output_sentences and resolve bug in sentences limit
+     Jul 01 2015: Resolve cases where cannot parse after .pdf file encountered. 
+     Jun 09 2015: Add in function set_limit_on_output_sentences and resolve bug in sentences limit.
+                  Realign the url with desc especially for those that cannot parse website.
      Feb 20 2015: Add in exception handling if website have problem parsing
+
+
+Bugs:
+    problem with encodeing
+
 
 """
 
-import re, os, sys, math
+import re, os, sys, math, traceback, time
 import pandas
 from pattern.web import URL, DOM, plaintext, extension
 
@@ -69,10 +76,25 @@ class WebCrawler(object):
         """
         for website in self.list_of_urls:
             print 'Now processing: ', website
+            
+            ## skip processing if pdf file
+            website_part_split = os.path.splitext(website)
+            if len(website_part_split) ==2:
+                if website_part_split[1] == '.pdf':
+                    print 'not parsing pdf'
+                    self.parse_results_list.append('')
+                    continue
+
             try:
                 self.parse_full_page(website)
-            except:
+            except Exception:
+##                print "Exception in user code:"
+##                print '-'*60
+##                traceback.print_exc(file=sys.stdout)
+##                print '-'*60
                 print 'problem parsing following url: ', website
+                time.sleep(2)
+                self.parse_results_list.append('')
             print
 
     def parse_full_page(self, target_url):
@@ -85,6 +107,9 @@ class WebCrawler(object):
         
         """
         webtext = Pattern_Parsing.get_plain_text_fr_website(target_url)
+        if webtext == '':
+            print 'no text'
+            return
         webtext = Pattern_Parsing.replace_special_char_as_newline(webtext)
         modified_text = Pattern_Parsing.retain_text_with_min_sentences_len(webtext,10, join_char = '\n', limit_num_of_sentences = self.numlimit_of_sentences )
         #modified_text = Pattern_Parsing.return_subset_of_text(modified_text, 0,5)
@@ -108,8 +133,11 @@ if __name__ == '__main__':
                         u'http://www.businesstimes.com.sg/premium-view-all-headlines',
                         u'http://finance.yahoo.com/investing-news/',
                         u'http://tradingandpsychology.blogspot.com/2014/09/walking-thinking-and-investing-john.html']
+
+        list_of_urls = [u'http://www.eventbrite.sg/e/corporate-talk-croesus-retail-trust-crt-tickets-16476241883',
+                        u'http://sgx.i3investor.com/jsp/announcehl.jsp', u'http://www.tremeritus.com/',]
         
-        ww = WebCrawler(list_of_urls[:3])
+        ww = WebCrawler(list_of_urls)
         ww.parse_all_urls()
             
     if choice == 2:
