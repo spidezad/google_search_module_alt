@@ -19,6 +19,8 @@
         Also the the data seems fragmented --> need to settle on the \n portion.
         Secondary search reinforce on the correct search
 
+        Need command line args
+
     Bugs:
         it seems that the website and content may not be accurate.
         may not be able to turn off the consolidated_results
@@ -31,7 +33,7 @@
 import os, sys
 from Python_Google_Search_Retrieve import gsearch_url_form_class
 from Web_Crawler import WebCrawler
-
+import Pattern_Parsing
 
 def get_searchlist_fr_file(filename):
     """Get search list from filename. Ability to add in a lot of phrases.
@@ -66,8 +68,8 @@ if __name__ == '__main__':
     print 'Start search'
 
     ## User options
-    NUM_SEARCH_RESULTS = 20                # number of search results returned
-    SENTENCE_LIMIT = 30
+    NUM_SEARCH_RESULTS = 30                # number of search results returned
+    SENTENCE_LIMIT = 40
     searchlist_fpath = r'C:\data\temp\gimage_pic\wordsearch_list.txt'
 
     if choice == 3:
@@ -131,6 +133,14 @@ if __name__ == '__main__':
             f.write('\n')
             f.write(desc.encode(errors = 'ignore') + '\n' + '#'*18 + '\n')
 
+    ## Enable freq note
+    print 'Measure phrases Frequency'
+    freq_save_filename =  r'C:\data\results_file_freq.txt'
+
+    most_common_phrases_list, phrases_freq_list = Pattern_Parsing.retrieve_top_freq_noun_phrases_fr_file(RESULT_FILE, 5000, 100, freq_save_filename)
+
+    for (phrase, freq) in phrases_freq_list:
+        print phrase, '  ', freq
 
 
 

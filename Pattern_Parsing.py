@@ -4,6 +4,8 @@
     Description: Parsing of text using python pattern module. Supplement to python pattern google search.
 
     Updates:
+        Jul 20 2015: Add in get_phrases_fr_list_of_keywords functions
+        Jul 19 2015: Add in get_noun_phrases_fr_text function with stopword list
         May 27 2015: amend to retain_text_with_min_sentences_len. Set the sentences limit.
         Sep 22 2014: Implement in python pattern google search
         Aug 02 2014: Add in singular function: convert all keyword to singular.
@@ -29,6 +31,13 @@
         pp = re.sub('<','<!--', dd)
         pp1 = re.sub('>','-->', pp)
         strip_comments(pp1)
+
+        Get frequnecy of words in list.
+        http://stackoverflow.com/questions/20510768/python-count-frequency-of-words-in-a-list
+        Counter(words).most_common(10)
+
+        List of tags in pattern
+        http://www.clips.ua.ac.be/pages/mbsp-tags
     
 
 """
@@ -37,6 +46,7 @@ from pattern.en import parse, Sentence, parsetree, tokenize, singularize
 from pattern.vector import count, words, PORTER, LEMMA, Document
 from pattern.web import URL, plaintext, HTTP404NotFound, HTTP400BadRequest
 from pattern.search import taxonomy, search , WordNetClassifier
+from collections import Counter
 
 def get_plain_text_fr_website(web_address):
     """ Scrape plain text from a web site.
@@ -243,6 +253,43 @@ def get_phrases_contain_keyword(text_parsetree, keyword, print_output = 0, phras
     else:
         return target_word_list_rm_duplicates
 
+
+def get_noun_phrases_fr_text(text_parsetree, print_output = 0, phrases_num_limit =5, stopword_file=''):
+    """ Method to return noun phrases in target text with duplicates
+        The phrases will be a noun phrases ie NP chunks.
+        Have the in build stop words --> check folder address for this.
+        Args:
+            text_parsetree (pattern.text.tree.Text): parsed tree of orginal text
+
+        Kwargs:
+            print_output (bool): 1 - print the results else do not print.
+            phrases_num_limit (int): return  the max number of phrases. if 0, return all.
+        
+        Returns:
+            (list): list of the found phrases. 
+
+    """
+    target_search_str = 'NP' #noun phrases
+    target_search = search(target_search_str, text_parsetree)# only apply if the keyword is top freq:'JJ?+ NN NN|NNP|NNS+'
+
+    target_word_list = []
+    for n in target_search:
+        if print_output: print retrieve_string(n)
+        target_word_list.append(retrieve_string(n))
+
+    ## exclude the stop words.
+    if stopword_file:
+        with open(stopword_file,'r') as f:
+            stopword_list = f.read()
+        stopword_list = stopword_list.split('\n')
+
+    target_word_list = [n for n in target_word_list if n.lower() not in stopword_list ]
+
+    if (len(target_word_list)>= phrases_num_limit and phrases_num_limit>0):
+        return target_word_list[:phrases_num_limit]
+    else:
+        return target_word_list
+
 def rm_duplicate_keywords(target_wordlist):
     """ Method to remove duplication in the key word.
         Args:
@@ -284,58 +331,117 @@ def get_phrases_fr_list_of_keywords(text_parsetree, keyword_list, phrases_num_li
         
     return results_dict
 
+def retrieve_top_freq_noun_phrases_fr_file(target_file, phrases_num_limit, top_cut_off, saveoutputfile = ''):
+    """ Retrieve the top frequency words found in a file. Limit to noun phrases only.
+        Stop word is active as default.
+        Args:
+            target_file (str): filepath as str.
+            phrases_num_limit (int):  the max number of phrases. if 0, return all
+            top_cut_off (int): for return of the top x phrases.
+        Kwargs:
+            saveoutputfile (str): if saveoutputfile not null, save to target location.
+        Returns:
+            (list) : just the top phrases.
+            (list of tuple): phrases and frequency
+
+    """
+    with open(target_file, 'r') as f:
+        webtext =  f.read()
+
+    t = parsetree(webtext, lemmata=True)
+
+    results_list = get_noun_phrases_fr_text(t, phrases_num_limit = phrases_num_limit, stopword_file = r'C:\pythonuserfiles\google_search_module_alt\stopwords_list.txt')
+
+    #try to get frequnecy of the list of words
+    counts = Counter(results_list)
+    phrases_freq_list =  counts.most_common(top_cut_off) #remove non consequencial words...
+    most_common_phrases_list = [n[0] for n in phrases_freq_list]
+
+    if saveoutputfile:
+        with open(saveoutputfile, 'w') as f:
+            for (phrase, freq) in phrases_freq_list:
+                temp_str = phrase + ' ' + str(freq) + '\n'
+                f.write(temp_str)
+            
+    return most_common_phrases_list, phrases_freq_list
+
+
 if __name__ == '__main__':
 
-    ## random web site for extraction.
-    web_address = 'http://en.wikipedia.org/wiki/Turbine'
+    choice = 1
 
-    ## extract the plain text.
-    webtext = get_plain_text_fr_website(web_address)
 
-    ## modified plain text so that it can remove those very short sentences (such as side bar menu).
-    webtext = replace_special_char_as_newline(webtext)
-    modified_text = retain_text_with_min_sentences_len(webtext,10, join_char = '\n')
-    modified_text = return_subset_of_text(modified_text, 0,5)
-    print modified_text
+    if choice ==1:
+        """ Experimentating with top frequency words.func_closure
+            Still need refinement, a lot of irrelevnt phrases
+        """
 
-    sys.exit()
-     
-    ## Begin summarizing the important pt of the website.
-    ## first step to get the top freq words, here stated 10.
-    ## Exclude len will remove any length less than specified, here stated 2.
-    list_of_top_freq_words = get_top_freq_words_in_text(modified_text, 4, lambda w: w.lstrip("'").isalpha(),exclude_len = 2)
-    print list_of_top_freq_words
-    ## >> ['turbine', 'fluid', 'impulse', 'rotor']
+        filename = r'C:\data\results_file.txt'
+        freq_save_filename =  r'C:\data\results_file_freq.txt'
 
-    ## Parse the whole document for analyzing
-    ## The pattern.en parser groups words that belong together into chunks.
-    ##For example, the black cat is one chunk, tagged NP (i.e., a noun phrase)
-    t = parsetree(modified_text, lemmata=True)
+        most_common_phrases_list, phrases_freq_list = retrieve_top_freq_noun_phrases_fr_file(filename, 5000, 50, freq_save_filename)
 
-    ## get target search phrases based on the top freq words.
-    results_dict = get_phrases_fr_list_of_keywords(t, list_of_top_freq_words, phrases_num_limit =5)
+        for (phrase, freq) in phrases_freq_list:
+            print phrase, '  ', freq
 
-    ##>>> ['turbine', 'fluid', 'impulse', 'rotor']
-    ##>>> keywords:  turbine
-    ##>>> [u'Turbine', u'.A steam turbine', u'case openedA turbine', u'useful work .A turbine', u'rotor .Early turbine']
-    ##>>> ********
-    ##>>> keywords:  fluid
-    ##>>> [u'fluid', u'working fluid', u'a high velocity fluid', u'the fluid', u'the working fluid']
-    ##>>> ********
-    ##>>> keywords:  impulse
-    ##>>> [u'impulse', u'reaction and impulse', u'Impulse', u'de Laval type impulse', u'equivalent impulse']
-    ##>>> ********
-    ##>>> keywords:  rotor
-    ##>>> [u'rotor', u'the rotor', u'turbine rotor', u'absolute terms the rotor', u'temperature turbine rotor']
-    ##>>> ********
 
-    taxonomy.classifiers.append(WordNetClassifier())
 
-    for n in list_of_top_freq_words:
-        pass
-        print taxonomy.parents(n)
 
-    sys.exit()
+
+
+
+    if choice ==2:
+
+        ## random web site for extraction.
+        web_address = 'http://en.wikipedia.org/wiki/Turbine'
+
+        ## extract the plain text.
+        webtext = get_plain_text_fr_website(web_address)
+
+        ## modified plain text so that it can remove those very short sentences (such as side bar menu).
+        webtext = replace_special_char_as_newline(webtext)
+        modified_text = retain_text_with_min_sentences_len(webtext,10, join_char = '\n')
+        modified_text = return_subset_of_text(modified_text, 0,5)
+        print modified_text
+
+        sys.exit()
+         
+        ## Begin summarizing the important pt of the website.
+        ## first step to get the top freq words, here stated 10.
+        ## Exclude len will remove any length less than specified, here stated 2.
+        list_of_top_freq_words = get_top_freq_words_in_text(modified_text, 4, lambda w: w.lstrip("'").isalpha(),exclude_len = 2)
+        print list_of_top_freq_words
+        ## >> ['turbine', 'fluid', 'impulse', 'rotor']
+
+        ## Parse the whole document for analyzing
+        ## The pattern.en parser groups words that belong together into chunks.
+        ##For example, the black cat is one chunk, tagged NP (i.e., a noun phrase)
+        t = parsetree(modified_text, lemmata=True)
+
+        ## get target search phrases based on the top freq words.
+        results_dict = get_phrases_fr_list_of_keywords(t, list_of_top_freq_words, phrases_num_limit =5)
+
+        ##>>> ['turbine', 'fluid', 'impulse', 'rotor']
+        ##>>> keywords:  turbine
+        ##>>> [u'Turbine', u'.A steam turbine', u'case openedA turbine', u'useful work .A turbine', u'rotor .Early turbine']
+        ##>>> ********
+        ##>>> keywords:  fluid
+        ##>>> [u'fluid', u'working fluid', u'a high velocity fluid', u'the fluid', u'the working fluid']
+        ##>>> ********
+        ##>>> keywords:  impulse
+        ##>>> [u'impulse', u'reaction and impulse', u'Impulse', u'de Laval type impulse', u'equivalent impulse']
+        ##>>> ********
+        ##>>> keywords:  rotor
+        ##>>> [u'rotor', u'the rotor', u'turbine rotor', u'absolute terms the rotor', u'temperature turbine rotor']
+        ##>>> ********
+
+        taxonomy.classifiers.append(WordNetClassifier())
+
+        for n in list_of_top_freq_words:
+            pass
+            print taxonomy.parents(n)
+
+        sys.exit()
 
 
 
