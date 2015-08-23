@@ -39,6 +39,8 @@ TODO:
 
     special characters handling --> & is %26
 
+    already have by date, create all the options together... put hte date only for soting 
+
 Learning:
     google search with date sorting
     http://lifehacker.com/384375/filter-google-results-by-date-with-a-url-trick
@@ -53,6 +55,10 @@ Learning:
 
     similar function code
     http://incolumitas.com/2013/01/06/googlesearch-a-rapid-python-class-to-get-search-results/
+
+Bugs:
+    does not seen tobe working for the date.
+    (may have to set the google.com.sg to work )--> in jap may change the google main site
 
 
 '''
@@ -103,7 +109,7 @@ class gsearch_url_form_class(object):
         self.enable_date_descending = 0 # will append the date descending text url if enable
 
         ## url construct string text
-        self.prefix_of_search_text = "https://www.google.com/search?q="
+        self.prefix_of_search_text = "https://www.google.com.sg/search?q="
         self.postfix_of_search_text = '&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a&channel=fflb&num=100'# non changable text
         self.date_descending_text = '&tbs=qdr:d,sbd:1'
 
@@ -159,6 +165,7 @@ class gsearch_url_form_class(object):
         assert num_search > 0
         self.search_results_num = num_search
 
+    ## parameters enabling
     def enable_sort_date_descending(self, input =1):
         """ Enable the sort_date_descending. Default is input =1.
             Kwargs:
@@ -166,6 +173,11 @@ class gsearch_url_form_class(object):
 
         """
         self.enable_date_descending = input
+
+    def enable_results_converging(self, input =1):
+        """
+
+        """
 
     def calculate_num_page_to_scan(self):
         """Calculate the num of page to scan, assume 100 results per page.
@@ -405,7 +417,7 @@ if __name__ == '__main__':
         ## Create the google search class
         hh = gsearch_url_form_class(search_words)
         hh.print_parse_results = 0
-        hh.enable_results_converging =1
+        hh.enable_results_converging =0
 
         ## Set the results
         hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
@@ -413,6 +425,8 @@ if __name__ == '__main__':
 
         ## Generate the Url list based on the search item
         url_list =  hh.formed_search_url()
+
+        sys.exit()
 
         ## Parse the google page based on the url
         hh.parse_all_search_url()

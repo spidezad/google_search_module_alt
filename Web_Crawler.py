@@ -48,6 +48,7 @@ class WebCrawler(object):
 
         ## options
         self.numlimit_of_sentences = 10 #if zero, will pull all --mot working
+        self.min_of_words_in_sentence = 10 #set the min of words for a sentence, else sentence is discard
 
         ## parse object
         self.dom_object = object()
@@ -111,7 +112,7 @@ class WebCrawler(object):
             print 'no text'
             return
         webtext = Pattern_Parsing.replace_special_char_as_newline(webtext)
-        modified_text = Pattern_Parsing.retain_text_with_min_sentences_len(webtext,10, join_char = '\n', limit_num_of_sentences = self.numlimit_of_sentences )
+        modified_text = Pattern_Parsing.retain_text_with_min_sentences_len(webtext,self.min_of_words_in_sentence, join_char = '\n', limit_num_of_sentences = self.numlimit_of_sentences )
         #modified_text = Pattern_Parsing.return_subset_of_text(modified_text, 0,5)
         #print modified_text
         self.parse_results_list.append(modified_text)

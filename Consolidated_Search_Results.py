@@ -9,6 +9,7 @@
         http://stackoverflow.com/questions/15703590/combining-two-lists-to-string
 
     Updates:
+        Jul 30 2015: Updates on more options , date enabling, sentence control
         Jun 09 2015: Add in get_searchlist_fr_file function
 
     To do:
@@ -18,6 +19,7 @@
         Enable date search as well.
         Also the the data seems fragmented --> need to settle on the \n portion.
         Secondary search reinforce on the correct search
+        Add in date filter
 
         Need command line args
 
@@ -68,8 +70,10 @@ if __name__ == '__main__':
     print 'Start search'
 
     ## User options
-    NUM_SEARCH_RESULTS = 30                # number of search results returned
-    SENTENCE_LIMIT = 40
+    NUM_SEARCH_RESULTS = 40                # number of search results returned
+    SENTENCE_LIMIT = 80
+    MIN_WORD_IN_SENTENCE = 6
+    ENABLE_DATE_SORT = 0
     searchlist_fpath = r'C:\data\temp\gimage_pic\wordsearch_list.txt'
 
     if choice == 3:
@@ -103,6 +107,7 @@ if __name__ == '__main__':
     ## Create the google search class
     hh = gsearch_url_form_class(search_words)
     hh.enable_results_converging =0
+    hh.enable_sort_date_descending(ENABLE_DATE_SORT)
 
     ## Set the results
     hh.set_num_of_search_results(NUM_SEARCH_RESULTS)
@@ -120,6 +125,7 @@ if __name__ == '__main__':
     
     ww = WebCrawler(hh.merged_result_links_list)
     ww.set_limit_on_output_sentences(SENTENCE_LIMIT)
+    ww.min_of_words_in_sentence = MIN_WORD_IN_SENTENCE #minimize this if want to see the frequency of words (but might need to increase the num of sentences)
     ww.parse_all_urls()
 
     RESULT_FILE = r'c:\data\results_file.txt'
