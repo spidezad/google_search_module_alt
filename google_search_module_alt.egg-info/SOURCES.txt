@@ -1,0 +1,11 @@
+setup.py
+google_search_module_alt/Consolidated_Search_Results.py
+google_search_module_alt/Pattern_Parsing.py
+google_search_module_alt/Python_Google_Search_Retrieve.py
+google_search_module_alt/Web_Crawler.py
+google_search_module_alt/__init__.py
+google_search_module_alt.egg-info/PKG-INFO
+google_search_module_alt.egg-info/SOURCES.txt
+google_search_module_alt.egg-info/dependency_links.txt
+google_search_module_alt.egg-info/not-zip-safe
+google_search_module_alt.egg-info/top_level.txt

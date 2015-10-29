@@ -60,6 +60,8 @@ Bugs:
     does not seen tobe working for the date.
     (may have to set the google.com.sg to work )--> in jap may change the google main site
 
+    news url not working
+
 
 '''
 
@@ -112,6 +114,7 @@ class gsearch_url_form_class(object):
         self.prefix_of_search_text = "https://www.google.com.sg/search?q="
         self.postfix_of_search_text = '&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a&channel=fflb&num=100'# non changable text
         self.date_descending_text = '&tbs=qdr:d,sbd:1'
+        self.search_type_text = '' #refering to various form of articles, news image etc
 
         ## url construct parameters
         self.sp_search_url_list = [] # list of list of url, consolidation of all the keywords.
@@ -174,10 +177,15 @@ class gsearch_url_form_class(object):
         """
         self.enable_date_descending = input
 
-    def enable_results_converging(self, input =1):
+    def enable_news_search(self, input =1):
+        """ Enabel search results to restrict to news. set to self.search_type_text
+            Kwargs:
+                input = 1
         """
-
-        """
+        if input:
+            self.search_type_text = '&tbm=nws'
+        else:
+            self.search_type_text = ''
 
     def calculate_num_page_to_scan(self):
         """Calculate the num of page to scan, assume 100 results per page.
@@ -239,7 +247,7 @@ class gsearch_url_form_class(object):
         for n in range(0,self.pages_to_scan,1):
             self.output_url_str = self.prefix_of_search_text + self.g_search_key + \
                                   self.postfix_of_search_text +\
-                                  self.formed_page_num(n)
+                                  self.formed_page_num(n) + self.search_type_text
             if self.enable_date_descending:
                 self.output_url_str = self.output_url_str + self.date_descending_text
             sp_search_url_list_per_keyword.append(self.output_url_str)
